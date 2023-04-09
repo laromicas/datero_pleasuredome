@@ -1,0 +1,109 @@
+#!/bin/env python3
+
+import json
+import os
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import requests
+from dateutil import parser
+
+DATERO_HOME = os.getenv('DATERO_HOME', os.getcwd())
+sys.path.append(DATERO_HOME)
+
+from bs4 import BeautifulSoup
+
+TMP = 'tmp'
+WORK_FOLDER = os.getenv('WORK_FOLDER', os.getcwd())
+SEED_NAME = os.getenv('SEED_NAME', os.path.basename(os.getcwd()))
+TMP_DIR = os.path.join(WORK_FOLDER, os.getenv('TMP_FOLDER', 'tmp'))
+TMP_T_EN = os.path.join(TMP_DIR, SEED_NAME)
+TMP_DATS = os.path.join(TMP_T_EN, 'dats')
+
+MAME_URL = 'https://pleasuredome.github.io/pleasuredome/mame/index.html'
+SETS = {
+    'MAME': {
+        'url': 'https://pleasuredome.github.io/pleasuredome/mame/index.html'
+    },
+    'Reference': {
+        'url': 'https://pleasuredome.github.io/pleasuredome/mame-reference-sets/index.html'
+    },
+    'HBMAME': {
+        'url': 'https://pleasuredome.github.io/pleasuredome/hbmame/index.html'
+    },
+    'FruitMachines': {
+        'url': 'https://pleasuredome.github.io/pleasuredome/fruitmachines/index.html'
+    },
+}
+ARCHIVE_URL = 'En-ROMs'
+DAT_FOLDER = 'DATs'
+
+
+
+
+def mktmpdirs():
+    os.makedirs(TMP_DIR, exist_ok=True)
+    os.makedirs(TMP_T_EN, exist_ok=True)
+    os.makedirs(TMP_DATS, exist_ok=True)
+
+def clean():
+    # delete old files
+    os.system(f'rm -rf {TMP_T_EN}/*')
+
+
+def main():
+    os.makedirs(TMP_DATS, exist_ok=True)
+    def get_dat_links(name, mame_url):
+        # get mame dats
+        print(f'Fetching {name} DAT files')
+        html_doc = requests.get(mame_url).text
+        soup = BeautifulSoup(html_doc, 'html.parser')
+        dat_links = []
+        for link in soup.find_all('a'):
+            url = link.get('href')
+            if url.endswith('.zip'):
+                dat_links.append(f'"{url}"')
+        return dat_links
+
+    print('Fetching Archive.org DAT files')
+    for name, sets in SETS.items():
+        url = sets['url']
+        links = get_dat_links(name, url)
+        path = os.path.join(TMP_DATS, name)
+        os.makedirs(path, exist_ok=True)
+        os.system(f'cd {path} && aria2c -Z {" ".join(links)}')
+        if name == 'Reference':
+            continue
+        if name in ('FruitMachines'):
+            files = os.listdir(path)
+            for file in files:
+                if 'FruitMachines' in file and file.endswith('.zip'):
+                    datetext = Path(file).stem.split('-')[1]
+                    date = parser.parse(datetext)
+                with open(os.path.join(path, 'metadata.txt'), 'w') as f:
+                    metadata = {
+                        'name': 'FruitMachines',
+                        'date': date.strftime('%Y-%m-%d'),
+                        'zipfile': file,
+                        'folder': Path(file).stem,
+                    }
+                    f.write(json.dumps(metadata, indent=4))
+        if name in ('FruitMachines', 'HBMAME'):
+            os.system(f'cd {path} && unzip -o \'*.zip\'')
+            os.system(f'cd {path} && rm *.zip')
+        if name in ('MAME'):
+            files = os.listdir(path)
+            for file in files:
+                if ('Software List' in file and not 'dir2dat' in file) \
+                    or 'EXTRA' in file:
+                    os.system(f'cd {path} && unzip -o "{file}" -d "{Path(file).stem}"')
+                    os.system(f'cd {path} && rm "{file}"')
+                else:
+                    os.system(f'cd {path} && unzip -o "{file}"')
+                    os.system(f'cd {path} && rm "{file}"')
+
+if __name__ == '__main__':
+    mktmpdirs()
+    clean()
+    main()
+    pass

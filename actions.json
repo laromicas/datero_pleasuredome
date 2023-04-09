@@ -1,0 +1,19 @@
+{
+
+    "{dat_path}/MAME": [
+        {
+            "action": "LoadDatFile",
+            "factory": "datero.seeds.pleasuredome.pleasuredome.dat.getMameDatFactory"
+        },
+        {
+            "action": "DeleteOld"
+        },
+        {
+            "action": "Copy",
+            "folder": "DatRoot"
+        },
+        {
+            "action": "SaveToDatabase"
+        }
+    ]
+}
