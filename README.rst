@@ -15,7 +15,7 @@ As today the tool supports dat-omatic, redump, and translated-english dats.
 It merges all the dats in a tree folder structure thought to use with Emulators rather than dats.
 The dat structure is compatible with `ROMVault <https://www.romvault.com/>`__.
 
-PleasureDome is a group that gathers dats for MAME, HBMAME and fruit machines.
+PleasureDome is a group that gathers dats for MAME, HBMAME and fruit machines.k
 
 
 Installation

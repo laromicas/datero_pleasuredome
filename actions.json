@@ -3,7 +3,7 @@
     "{dat_path}/MAME": [
         {
             "action": "LoadDatFile",
-            "factory": "datero.seeds.pleasuredome.pleasuredome.dat.getMameDatFactory"
+            "factory": "datero.seeds.pleasuredome.pleasuredome.dat.mame_dat_factory"
         },
         {
             "action": "DeleteOld"

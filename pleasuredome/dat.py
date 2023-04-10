@@ -8,29 +8,34 @@ import re
 import pathlib
 
 from datero.repositories.dat import XMLDatFile, DirMultiDatFile
+# pylint: disable=attribute-defined-outside-init,unsupported-membership-test
 
 
-def getMameDatFactory(file: str):
+def mame_dat_factory(file: str):
     """ Dat factory. """
     ext = pathlib.Path(file).suffix
     if ext in ('.dat', '.xml'):
         return MameDat
     if os.path.isdir(file):
         return MameDirDat
+    return None
 
 
-def get_version(s):
-    search = re.findall(r'0\.[0-9]*[\.[0-9]*]?', s)
+def get_version(string: str):
+    """ Get the version from the dat file. """
+    search = re.findall(r'0\.[0-9]*[\.[0-9]*]?', string)
     if search:
         return search[-1]
     return None
 
 
-def remove_extra_spaces(s):
-    return re.sub(' +', ' ', s)
+def remove_extra_spaces(string: str):
+    """ Remove extra spaces from the dat file. """
+    return re.sub(' +', ' ', string)
 
 
 class MameDirDat(DirMultiDatFile):
+    """ Mame Dir Dat class. """
 
     def initial_parse(self):
         # pylint: disable=R0801
@@ -51,6 +56,7 @@ class MameDirDat(DirMultiDatFile):
 
 
 class MameDat(XMLDatFile):
+    """ Mame Dat class. """
 
     def initial_parse(self):
         # pylint: disable=R0801
@@ -73,6 +79,7 @@ class MameDat(XMLDatFile):
 
 
 class HomeBrewMameDat(XMLDatFile):
+    """ HomeBrew Mame Dat class. """
 
     def initial_parse(self):
         # pylint: disable=R0801
@@ -95,13 +102,15 @@ class HomeBrewMameDat(XMLDatFile):
 
 
 class FruitMachinesDat(XMLDatFile):
+    """ Fruit Machines Dat class. """
 
     def load_metadata_file(self):
+        """ Load the metadata file. """
         basedir = Path(self.file).parents[0]
         filename = os.path.join(basedir, 'metadata.txt')
         if os.path.exists(filename):
-            with open(filename) as f:
-                metadata = json.load(f)
+            with open(filename, encoding='utf-8') as file:
+                metadata = json.load(file)
         return metadata
 
 
@@ -126,6 +135,6 @@ class FruitMachinesDat(XMLDatFile):
     def get_date(self):
         """ Get the date from the dat file. """
         if self.file and '(' in self.file:
-            s = self.file
-            self.date = s[s.find("(")+1:s.find(")")]
+            file = str(self.file)
+            self.date = file[file.find("(")+1:file.find(")")]
         return self.date
